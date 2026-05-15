@@ -19,9 +19,4 @@ public class HealthController {
         return healthService.checkHealth();
     }
 
-    @GetMapping("/health/latest")
-    public HealthResponse getLatestHealth() {
-        return healthService.getLatestHealth();
-    }
-
 }
