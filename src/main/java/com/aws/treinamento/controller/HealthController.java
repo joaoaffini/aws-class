@@ -1,6 +1,6 @@
-package com.aws.class.controller;
+package com.aws.treinamento.controller;
 
-import com.aws.class.dto.HealthResponse;
+import com.aws.treinamento.dto.HealthResponse;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 

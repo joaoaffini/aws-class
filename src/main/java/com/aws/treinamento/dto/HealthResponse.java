@@ -1,4 +1,4 @@
-package com.aws.class.dto;
+package com.aws.treinamento.dto;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
