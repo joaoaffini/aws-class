@@ -78,20 +78,27 @@ public class S3Service {
     }
 
     public S3ListResponse listFiles() {
-        logger.info("[S3Service] Listando arquivos do bucket: {}", bucketName);
+        logger.info("[S3Service] ===== INICIANDO LISTAGEM DE ARQUIVOS =====");
+        logger.info("[S3Service] Bucket: {}", bucketName);
 
         try {
+            logger.info("[S3Service] Criando ListObjectsV2Request...");
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
                     .bucket(bucketName)
                     .build();
 
+            logger.info("[S3Service] Chamando S3 para listar objetos...");
             ListObjectsV2Response listObjectsResponse = s3Client.listObjectsV2(listObjectsRequest);
+
+            logger.info("[S3Service] Resposta recebida. Total de objetos: {}", 
+                    listObjectsResponse.keyCount());
 
             List<S3FileResponse> files = listObjectsResponse.contents().stream()
                     .map(this::mapS3ObjectToFileResponse)
                     .collect(Collectors.toList());
 
-            logger.info("[S3Service] Total de arquivos encontrados: {}", files.size());
+            logger.info("[S3Service] Total de arquivos processados: {}", files.size());
+            logger.info("[S3Service] ===== LISTAGEM CONCLUÍDA COM SUCESSO =====");
 
             return S3ListResponse.builder()
                     .bucketName(bucketName)
@@ -100,7 +107,10 @@ public class S3Service {
                     .build();
 
         } catch (Exception e) {
-            logger.error("[S3Service] Erro ao listar arquivos do bucket: {}", bucketName, e);
+            logger.error("[S3Service] ===== ERRO AO LISTAR ARQUIVOS =====", e);
+            logger.error("[S3Service] Tipo de exceção: {}", e.getClass().getName());
+            logger.error("[S3Service] Mensagem: {}", e.getMessage());
+            logger.error("[S3Service] Bucket tentado: {}", bucketName);
             throw new S3Exception("Erro ao listar arquivos: " + e.getMessage(), e);
         }
     }

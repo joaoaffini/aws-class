@@ -75,12 +75,22 @@ public class S3Controller {
     })
     public ResponseEntity<S3ListResponse> listFiles() {
 
-        logger.info("[S3Controller] Requisição para listar arquivos do S3");
+        logger.info("[S3Controller] ===== REQUISIÇÃO DE LISTAGEM RECEBIDA =====");
+        
+        try {
+            logger.info("[S3Controller] Chamando S3Service.listFiles()...");
+            S3ListResponse response = s3Service.listFiles();
 
-        S3ListResponse response = s3Service.listFiles();
-
-        logger.info("[S3Controller] Lista retornada com {} arquivo(s)", response.getTotalFiles());
-        return ResponseEntity.ok(response);
+            logger.info("[S3Controller] Lista retornada com {} arquivo(s)", response.getTotalFiles());
+            logger.info("[S3Controller] ===== REQUISIÇÃO CONCLUÍDA COM SUCESSO =====");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("[S3Controller] ===== ERRO NA REQUISIÇÃO DE LISTAGEM =====", e);
+            logger.error("[S3Controller] Tipo de exceção: {}", e.getClass().getName());
+            logger.error("[S3Controller] Mensagem do erro: {}", e.getMessage());
+            throw e;
+        }
     }
 
     @GetMapping("/download/{fileName}")
