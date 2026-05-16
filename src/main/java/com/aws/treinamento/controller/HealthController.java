@@ -7,6 +7,8 @@ import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -14,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Health", description = "Endpoints para verificar saúde da aplicação")
 public class HealthController {
 
+    private static final Logger logger = LoggerFactory.getLogger(HealthController.class);
     private final HealthService healthService;
 
     public HealthController(HealthService healthService) {
@@ -34,7 +37,15 @@ public class HealthController {
             )
     )
     public HealthResponse health() {
-        return healthService.checkHealth();
+        logger.info("[HealthController] === GET /health ===");
+        logger.info("[HealthController] Nenhum parâmetro de entrada");
+        
+        HealthResponse response = healthService.checkHealth();
+        
+        logger.info("[HealthController] Resposta: status={}, timestamp={}", response.getStatus(), response.getTimestamp());
+        logger.info("[HealthController] === Fim do processamento ===");
+        
+        return response;
     }
 
 }

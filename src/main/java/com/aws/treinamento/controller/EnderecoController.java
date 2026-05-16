@@ -10,6 +10,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "Endereço", description = "Endpoints para buscar latitude e longitude de endereços (Nominatim)")
 public class EnderecoController {
 
+    private static final Logger logger = LoggerFactory.getLogger(EnderecoController.class);
     private final EnderecoService enderecoService;
 
     public EnderecoController(EnderecoService enderecoService) {
@@ -56,7 +59,15 @@ public class EnderecoController {
                     example = "Avenida Paulista, São Paulo"
             )
             String q) {
+        logger.info("[EnderecoController] === GET /endereco ===");
+        logger.info("[EnderecoController] Parâmetro de entrada: q={}", q);
+        
         EnderecoResponse response = enderecoService.buscarPorEndereco(q);
+        
+        logger.info("[EnderecoController] Resposta: latitude={}, longitude={}, endereco={}", 
+                response.getLatitude(), response.getLongitude(), response.getEndereco());
+        logger.info("[EnderecoController] === Fim do processamento ===");
+        
         return ResponseEntity.ok(response);
     }
 
@@ -140,8 +151,23 @@ public class EnderecoController {
             )
             String postalcode) {
 
+        logger.info("[EnderecoController] === GET /endereco/buscar ===");
+        logger.info("[EnderecoController] Parâmetros de entrada:");
+        logger.info("[EnderecoController]   - street: {}", street);
+        logger.info("[EnderecoController]   - city: {}", city);
+        logger.info("[EnderecoController]   - country: {}", country);
+        logger.info("[EnderecoController]   - amenity: {}", amenity);
+        logger.info("[EnderecoController]   - county: {}", county);
+        logger.info("[EnderecoController]   - state: {}", state);
+        logger.info("[EnderecoController]   - postalcode: {}", postalcode);
+        
         EnderecoRequest request = new EnderecoRequest(street, city, country, amenity, county, state, postalcode);
         EnderecoResponse response = enderecoService.buscarPorEndereoEstruturado(request);
+        
+        logger.info("[EnderecoController] Resposta: latitude={}, longitude={}, endereco={}, tipo={}", 
+                response.getLatitude(), response.getLongitude(), response.getEndereco(), response.getTipo());
+        logger.info("[EnderecoController] === Fim do processamento ===");
+        
         return ResponseEntity.ok(response);
     }
 

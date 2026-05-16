@@ -9,6 +9,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -18,6 +20,7 @@ import org.springframework.web.bind.annotation.RestController;
 @Tag(name = "CEP", description = "Endpoints para buscar informações por CEP")
 public class CepController {
 
+    private static final Logger logger = LoggerFactory.getLogger(CepController.class);
     private final CepService cepService;
 
     public CepController(CepService cepService) {
@@ -55,7 +58,15 @@ public class CepController {
                     example = "01310100"
             )
             String cep) {
+        logger.info("[CepController] === GET /cep/{} ===", cep);
+        logger.info("[CepController] Parâmetro de entrada: cep={}", cep);
+        
         CepResponse response = cepService.findByCep(cep);
+        
+        logger.info("[CepController] Resposta: cep={}, street={}, city={}, state={}", 
+                response.getCep(), response.getStreet(), response.getCity(), response.getState());
+        logger.info("[CepController] === Fim do processamento ===");
+        
         return ResponseEntity.ok(response);
     }
 
