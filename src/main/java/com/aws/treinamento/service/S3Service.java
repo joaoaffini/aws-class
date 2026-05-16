@@ -134,6 +134,55 @@ public class S3Service {
         }
     }
 
+    public S3ListResponse listFilesViaAccessPoint() {
+        logger.info("[S3Service] ===== INICIANDO LISTAGEM VIA ACCESS POINT =====");
+        logger.info("[S3Service] Usando Access Point ARN: {}", accessPointArn);
+
+        // Validação: se não houver AP configurado, lança exceção
+        if (accessPointArn == null || accessPointArn.isEmpty()) {
+            logger.warn("[S3Service] Access Point não configurado!");
+            throw new S3Exception("Access Point ARN não foi configurado em application.properties");
+        }
+
+        try {
+            logger.info("[S3Service] Criando ListObjectsV2Request com Access Point...");
+            logger.info("[S3Service] Resource ID a ser usado: {}", accessPointArn);
+            
+            // Usa o ARN do Access Point diretamente
+            ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
+                    .bucket(accessPointArn)  // ← ARN ao invés do nome do bucket
+                    .build();
+
+            logger.info("[S3Service] Chamando S3 via Access Point...");
+            ListObjectsV2Response listObjectsResponse = s3Client.listObjectsV2(listObjectsRequest);
+
+            logger.info("[S3Service] Resposta recebida via Access Point. Total de objetos: {}", 
+                    listObjectsResponse.keyCount());
+
+            List<S3FileResponse> files = listObjectsResponse.contents() != null 
+                    ? listObjectsResponse.contents().stream()
+                        .map(this::mapS3ObjectToFileResponse)
+                        .collect(Collectors.toList())
+                    : java.util.Collections.emptyList();
+
+            logger.info("[S3Service] Total de arquivos processados via AP: {}", files.size());
+            logger.info("[S3Service] ===== LISTAGEM VIA ACCESS POINT CONCLUÍDA COM SUCESSO =====");
+
+            return S3ListResponse.builder()
+                    .bucketName(bucketName)  // Nome real do bucket
+                    .totalFiles(files.size())
+                    .files(files)
+                    .build();
+
+        } catch (Exception e) {
+            logger.error("[S3Service] ===== ERRO AO LISTAR ARQUIVOS VIA ACCESS POINT =====", e);
+            logger.error("[S3Service] Tipo de exceção: {}", e.getClass().getName());
+            logger.error("[S3Service] Mensagem: {}", e.getMessage());
+            logger.error("[S3Service] Access Point ARN tentado: {}", accessPointArn);
+            throw new S3Exception("Erro ao listar arquivos via Access Point: " + e.getMessage(), e);
+        }
+    }
+
     public byte[] downloadFile(String fileName) {
         logger.info("[S3Service] Baixando arquivo: {}", fileName);
 

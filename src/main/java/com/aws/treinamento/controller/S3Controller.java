@@ -118,6 +118,35 @@ public class S3Controller {
         }
     }
 
+    @GetMapping("/list-via-access-point")
+    @Operation(summary = "Listar arquivos via Access Point", 
+               description = "Lista todos os arquivos do bucket S3 usando o Access Point ARN configurado")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de arquivos recuperada com sucesso via Access Point",
+            content = @Content(schema = @Schema(implementation = S3ListResponse.class))),
+        @ApiResponse(responseCode = "400", description = "Access Point não configurado"),
+        @ApiResponse(responseCode = "500", description = "Erro no servidor")
+    })
+    public ResponseEntity<S3ListResponse> listFilesViaAccessPoint() {
+
+        logger.info("[S3Controller] ===== REQUISIÇÃO DE LISTAGEM VIA ACCESS POINT RECEBIDA =====");
+        
+        try {
+            logger.info("[S3Controller] Chamando S3Service.listFilesViaAccessPoint()...");
+            S3ListResponse response = s3Service.listFilesViaAccessPoint();
+
+            logger.info("[S3Controller] Lista via Access Point retornada com {} arquivo(s)", response.getTotalFiles());
+            logger.info("[S3Controller] ===== REQUISIÇÃO VIA ACCESS POINT CONCLUÍDA COM SUCESSO =====");
+            
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("[S3Controller] ===== ERRO NA REQUISIÇÃO DE LISTAGEM VIA ACCESS POINT =====", e);
+            logger.error("[S3Controller] Tipo de exceção: {}", e.getClass().getName());
+            logger.error("[S3Controller] Mensagem do erro: {}", e.getMessage());
+            throw e;
+        }
+    }
+
     @GetMapping("/download/{fileName}")
     @Operation(summary = "Baixar arquivo", description = "Baixa um arquivo específico do bucket S3")
     @ApiResponses(value = {
