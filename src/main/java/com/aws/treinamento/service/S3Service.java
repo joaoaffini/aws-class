@@ -33,11 +33,21 @@ public class S3Service {
 
     private final S3Client s3Client;
 
-    @Value("${aws.s3.bucket-name:s3-aws-class-4}")
+    @Value("${aws.s3.bucket-name:}")
     private String bucketName;
+
+    @Value("${aws.s3.access-point-arn:}")
+    private String accessPointArn;
+
+    @Value("${aws.s3.access-point-name:}")
+    private String accessPointName;
 
     public S3Service(S3Client s3Client) {
         this.s3Client = s3Client;
+        logger.info("[S3Service] ===== CONFIGURAÇÃO S3 =====");
+        logger.info("[S3Service] Bucket Name: {}", bucketName);
+        logger.info("[S3Service] Access Point Name: {}", accessPointName);
+        logger.info("[S3Service] Access Point ARN: {}", accessPointArn);
     }
 
     public S3UploadResponse uploadFile(String fileName, byte[] fileContent, String contentType) {
@@ -47,8 +57,12 @@ public class S3Service {
         validateFileContent(fileContent);
 
         try {
+            // Quando usando Access Point, passamos o ARN como bucket
+            String bucketOrArn = accessPointArn != null && !accessPointArn.isEmpty() ? accessPointArn : bucketName;
+            logger.info("[S3Service] Usando Access Point/Bucket: {}", bucketOrArn);
+            
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(bucketOrArn)
                     .key(fileName)
                     .contentType(contentType)
                     .contentLength((long) fileContent.length)
@@ -73,18 +87,23 @@ public class S3Service {
 
         } catch (Exception e) {
             logger.error("[S3Service] Erro ao fazer upload do arquivo: {}", fileName, e);
+            logger.error("[S3Service] Access Point: {}", accessPointName);
             throw new S3Exception("Erro ao fazer upload do arquivo: " + e.getMessage(), e);
         }
     }
 
     public S3ListResponse listFiles() {
         logger.info("[S3Service] ===== INICIANDO LISTAGEM DE ARQUIVOS =====");
-        logger.info("[S3Service] Bucket: {}", bucketName);
+        logger.info("[S3Service] Usando Access Point: {}", accessPointName);
 
         try {
             logger.info("[S3Service] Criando ListObjectsV2Request...");
+            // Quando usando Access Point, passamos o ARN como bucket
+            String bucketOrArn = accessPointArn != null && !accessPointArn.isEmpty() ? accessPointArn : bucketName;
+            logger.info("[S3Service] Bucket/ARN a ser usado: {}", bucketOrArn);
+            
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
-                    .bucket(bucketName)
+                    .bucket(bucketOrArn)
                     .build();
 
             logger.info("[S3Service] Chamando S3 para listar objetos...");
@@ -93,9 +112,11 @@ public class S3Service {
             logger.info("[S3Service] Resposta recebida. Total de objetos: {}", 
                     listObjectsResponse.keyCount());
 
-            List<S3FileResponse> files = listObjectsResponse.contents().stream()
-                    .map(this::mapS3ObjectToFileResponse)
-                    .collect(Collectors.toList());
+            List<S3FileResponse> files = listObjectsResponse.contents() != null 
+                    ? listObjectsResponse.contents().stream()
+                        .map(this::mapS3ObjectToFileResponse)
+                        .collect(Collectors.toList())
+                    : java.util.Collections.emptyList();
 
             logger.info("[S3Service] Total de arquivos processados: {}", files.size());
             logger.info("[S3Service] ===== LISTAGEM CONCLUÍDA COM SUCESSO =====");
@@ -110,7 +131,8 @@ public class S3Service {
             logger.error("[S3Service] ===== ERRO AO LISTAR ARQUIVOS =====", e);
             logger.error("[S3Service] Tipo de exceção: {}", e.getClass().getName());
             logger.error("[S3Service] Mensagem: {}", e.getMessage());
-            logger.error("[S3Service] Bucket tentado: {}", bucketName);
+            logger.error("[S3Service] Access Point tentado: {}", accessPointName);
+            logger.error("[S3Service] ARN: {}", accessPointArn);
             throw new S3Exception("Erro ao listar arquivos: " + e.getMessage(), e);
         }
     }
@@ -121,8 +143,11 @@ public class S3Service {
         validateFileName(fileName);
 
         try {
+            // Quando usando Access Point, passamos o ARN como bucket
+            String bucketOrArn = accessPointArn != null && !accessPointArn.isEmpty() ? accessPointArn : bucketName;
+            
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketName)
+                    .bucket(bucketOrArn)
                     .key(fileName)
                     .build();
 
@@ -165,6 +190,38 @@ public class S3Service {
         }
         if (fileContent.length > 5_000_000_000L) { // 5GB
             throw new S3Exception("Arquivo muito grande. Tamanho máximo: 5GB");
+        }
+    }
+
+    public java.util.Map<String, Object> listAvailableBuckets() {
+        logger.info("[S3Service] ===== DEBUG: LISTANDO CONFIGURAÇÕES =====");
+        
+        java.util.Map<String, Object> result = new java.util.LinkedHashMap<>();
+
+        try {
+            logger.info("[S3Service] Configurações AWS S3:");
+            logger.info("[S3Service] Bucket Name: {}", bucketName);
+            logger.info("[S3Service] Access Point Name: {}", accessPointName);
+            logger.info("[S3Service] Access Point ARN: {}", accessPointArn);
+
+            result.put("configuredBucketName", bucketName);
+            result.put("configuredAccessPointName", accessPointName);
+            result.put("configuredAccessPointArn", accessPointArn);
+            result.put("status", "Configuração carregada com sucesso");
+            result.put("message", "Access Point está configurado e pronto para usar");
+            
+            logger.info("[S3Service] Configuração carregada com sucesso");
+            
+            return result;
+
+        } catch (Exception e) {
+            logger.error("[S3Service] Erro ao carregar configurações: {}", e.getMessage(), e);
+            result.put("error", "Erro ao carregar configurações");
+            result.put("message", e.getMessage());
+            result.put("configuredBucketName", bucketName);
+            result.put("configuredAccessPointName", accessPointName);
+            result.put("configuredAccessPointArn", accessPointArn);
+            return result;
         }
     }
 }

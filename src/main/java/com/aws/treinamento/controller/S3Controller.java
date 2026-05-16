@@ -23,6 +23,9 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.util.LinkedHashMap;
+import java.util.Map;
+
 @RestController
 @RequestMapping("/api/s3")
 @Tag(name = "S3", description = "Operações de gerenciamento de arquivos no Amazon S3")
@@ -63,6 +66,28 @@ public class S3Controller {
         } catch (Exception e) {
             logger.error("[S3Controller] Erro ao processar upload", e);
             throw new RuntimeException("Erro ao processar o arquivo: " + e.getMessage(), e);
+        }
+    }
+
+    @GetMapping("/debug/buckets")
+    @Operation(summary = "Debug - Listar buckets disponíveis", description = "Lista todos os buckets S3 disponíveis para a role IAM")
+    @ApiResponses(value = {
+        @ApiResponse(responseCode = "200", description = "Lista de buckets"),
+        @ApiResponse(responseCode = "500", description = "Erro no servidor")
+    })
+    public ResponseEntity<Map<String, Object>> listBuckets() {
+        logger.info("[S3Controller] ===== DEBUG: LISTANDO BUCKETS DISPONÍVEIS =====");
+        
+        try {
+            Map<String, Object> response = s3Service.listAvailableBuckets();
+            logger.info("[S3Controller] Debug de buckets concluído");
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("[S3Controller] Erro ao listar buckets: {}", e.getMessage(), e);
+            Map<String, Object> error = new LinkedHashMap<>();
+            error.put("error", "Erro ao listar buckets");
+            error.put("message", e.getMessage());
+            return ResponseEntity.status(500).body(error);
         }
     }
 
