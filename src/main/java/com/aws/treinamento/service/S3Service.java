@@ -57,12 +57,11 @@ public class S3Service {
         validateFileContent(fileContent);
 
         try {
-            // Quando usando Access Point, passamos o ARN como bucket
-            String bucketOrArn = accessPointArn != null && !accessPointArn.isEmpty() ? accessPointArn : bucketName;
-            logger.info("[S3Service] Usando Access Point/Bucket: {}", bucketOrArn);
+            // Usar apenas o bucket name, não o ARN
+            logger.info("[S3Service] Usando Bucket: {}", bucketName);
             
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
-                    .bucket(bucketOrArn)
+                    .bucket(bucketName)
                     .key(fileName)
                     .contentType(contentType)
                     .contentLength((long) fileContent.length)
@@ -87,23 +86,22 @@ public class S3Service {
 
         } catch (Exception e) {
             logger.error("[S3Service] Erro ao fazer upload do arquivo: {}", fileName, e);
-            logger.error("[S3Service] Access Point: {}", accessPointName);
+            logger.error("[S3Service] Bucket: {}", bucketName);
             throw new S3Exception("Erro ao fazer upload do arquivo: " + e.getMessage(), e);
         }
     }
 
     public S3ListResponse listFiles() {
         logger.info("[S3Service] ===== INICIANDO LISTAGEM DE ARQUIVOS =====");
-        logger.info("[S3Service] Usando Access Point: {}", accessPointName);
+        logger.info("[S3Service] Usando Bucket: {}", bucketName);
 
         try {
             logger.info("[S3Service] Criando ListObjectsV2Request...");
-            // Quando usando Access Point, passamos o ARN como bucket
-            String bucketOrArn = accessPointArn != null && !accessPointArn.isEmpty() ? accessPointArn : bucketName;
-            logger.info("[S3Service] Bucket/ARN a ser usado: {}", bucketOrArn);
+            // Usar apenas o bucket name, não o ARN
+            logger.info("[S3Service] Bucket a ser usado: {}", bucketName);
             
             ListObjectsV2Request listObjectsRequest = ListObjectsV2Request.builder()
-                    .bucket(bucketOrArn)
+                    .bucket(bucketName)
                     .build();
 
             logger.info("[S3Service] Chamando S3 para listar objetos...");
@@ -131,8 +129,7 @@ public class S3Service {
             logger.error("[S3Service] ===== ERRO AO LISTAR ARQUIVOS =====", e);
             logger.error("[S3Service] Tipo de exceção: {}", e.getClass().getName());
             logger.error("[S3Service] Mensagem: {}", e.getMessage());
-            logger.error("[S3Service] Access Point tentado: {}", accessPointName);
-            logger.error("[S3Service] ARN: {}", accessPointArn);
+            logger.error("[S3Service] Bucket tentado: {}", bucketName);
             throw new S3Exception("Erro ao listar arquivos: " + e.getMessage(), e);
         }
     }
@@ -143,11 +140,9 @@ public class S3Service {
         validateFileName(fileName);
 
         try {
-            // Quando usando Access Point, passamos o ARN como bucket
-            String bucketOrArn = accessPointArn != null && !accessPointArn.isEmpty() ? accessPointArn : bucketName;
-            
+            // Usar apenas o bucket name, não o ARN
             GetObjectRequest getObjectRequest = GetObjectRequest.builder()
-                    .bucket(bucketOrArn)
+                    .bucket(bucketName)
                     .key(fileName)
                     .build();
 
